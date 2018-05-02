@@ -55,34 +55,37 @@ public class HomeActivity  extends Activity implements View.OnClickListener{
         int id = v.getId();
         switch (id){
             case R.id.text_1 :
-                DBHelper.getInstance(this);
+                DBHelper.getInstance(this , DBHelper.mVersion );
                 break;
             case R.id.text_2 :
-                DBHelper.getInstance(this).addColumn();
+                DBHelper.getInstance(this , DBHelper.mVersion ).addColumn();
                 break;
             case R.id.text_3 :
-                DBHelper.getInstance(this).deleteColumn();
+                DBHelper.getInstance(this , DBHelper.mVersion).deleteColumn();
                 break;
             case R.id.text_4 :
-                DBHelper.getInstance(this).resetTableName("aaaaaaa");
+                DBHelper.getInstance(this , DBHelper.mVersion).resetTableName("aaaaaaa");
                 break;
             case R.id.text_5 :
-                DBHelper.getInstance(this).createTable("bbbbbb");
+                DBHelper.getInstance(this , DBHelper.mVersion).createTable("bbbbbb");
                 break;
             case R.id.text_6 :
-                DBHelper.getInstance(this).upDate("'T'" , "'A'" , "purcgase_price / 0 " , "  purcgase_price/0 is not null  " ); // 总结 null 参与数值运算 得到 null ; 非法的数值运算的到null 如 ** / 0 ;**代表任何值
+                DBHelper.getInstance(this , DBHelper.mVersion).upDate("'T'" , "'A'" , "purcgase_price / 0 " , "  purcgase_price/0 is not null  " ); // 总结 null 参与数值运算 得到 null ; 非法的数值运算的到null 如 ** / 0 ;**代表任何值
                 break;
             case R.id.text_7 :
-                DBHelper.getInstance(this).intoValues();
+                DBHelper.getInstance(this , DBHelper.mVersion).intoValues();
 //                DBHelper.getInstance(this).selectData();
-                DBHelper.getInstance(this).getCount();
-                DBHelper.getInstance(this).getSUM();
-                DBHelper.getInstance(this).getAVG();
-                DBHelper.getInstance(this).getMAX();
-                DBHelper.getInstance(this).getMIN();
+                DBHelper.getInstance(this, DBHelper.mVersion).getCount();
+                DBHelper.getInstance(this, DBHelper.mVersion).getSUM();
+                DBHelper.getInstance(this, DBHelper.mVersion).getAVG();
+                DBHelper.getInstance(this, DBHelper.mVersion).getMAX();
+                DBHelper.getInstance(this, DBHelper.mVersion).getMIN();
+                DBHelper.getInstance(this, DBHelper.mVersion).getGroupBy();
+                DBHelper.getInstance(this, DBHelper.mVersion).groupByHaving();
+                DBHelper.getInstance(this,  DBHelper.mVersion ).orderBy();
                 break;
             case R.id.text_8 :
-                DBHelper.getInstance(this).deleteData(" regist_date is null "); // regist_date = null 不报错，但是不起作用（总结：null可以参数比较运算，但是不起作用)
+//                DBHelper.getInstance(this).deleteData(" regist_date is null "); // regist_date = null 不报错，但是不起作用（总结：null可以参数比较运算，但是不起作用)
                 break;
         }
     }

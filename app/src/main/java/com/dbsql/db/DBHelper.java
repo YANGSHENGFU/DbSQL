@@ -14,15 +14,19 @@ import java.io.File;
 
 public class DBHelper {
     private String batabaseName = "message.db";
+    private String batabaseNameTo = "messageTo.db";
     public static String tableName = "message" ;
     private DBOpenHelper dbOpenHelper ;
     private static  DBHelper dbHelper;
+    private int mNewVersion = 1 ;
+    private Context mContext ;
     /**
      * 获取本类实例
      * @param context
      * @return
      */
     public static DBHelper getInstance(Context context){
+
         if(dbHelper == null ){
            synchronized (DBHelper.class){
               if(dbHelper == null){
@@ -33,9 +37,23 @@ public class DBHelper {
         return dbHelper ;
     }
 
-    private DBHelper(Context context){
-        dbOpenHelper = new DBOpenHelper(context ,  getDBPath(context , batabaseName ) , null , 1);
+    private DBHelper(Context context ){
+        mContext = context ;
+        dbOpenHelper = new DBOpenHelper(context ,  getDBPath(context , batabaseName ) , null , mNewVersion );
     }
+
+    /**
+     * 设置最新的数据库版本号
+     * @param newVersion
+     */
+    public void setNewVersion( int newVersion ){
+        if(newVersion <= mNewVersion){
+            return;
+        }
+        dbOpenHelper = new DBOpenHelper( mContext ,  getDBPath( mContext , batabaseName ) , null , mNewVersion );
+    }
+
+
 
     /**
      * 获取保存数据库的路径
@@ -98,10 +116,14 @@ public class DBHelper {
      * 发现怎样都报错，应该不支持删除列的操作
      */
     public void deleteColumn(){
-//        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-//        String sql = "alter table "+ tableName + " drop column address" ;
-//        db.execSQL(sql);
+        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+        String sql = "alter table "+ tableName + " delete column regist_date" ;
+        db.execSQL(sql);
+        db.insert("" , "" , null ) ;
+        db.delete("" , "" , new String[]{""});
+        db.query(tableName , new String[]{"product_id" , "product_type" , "product_name" , "sale_price" , "purcgase_price" , "regist_date"  } , "sale_price >=?" , new String[]{"100"} ,"product_type"  , null , "asc");
     }
+
 
     /**
      * 修改列
@@ -121,7 +143,7 @@ public class DBHelper {
      * 删除表
      */
     public void dropTable(){
-        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+        SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
         String sql = "drop table bbbbbb";
         db.execSQL(sql);
     }
@@ -149,20 +171,20 @@ public class DBHelper {
         db.execSQL(sql2);
         String sql3 = "insert into " + DBOpenHelper.tableName + "  values( '003'  , '运动T恤' , '衣服' , 4000 , 2800 , null )" ;
         db.execSQL(sql3);
-        String sql4 = "insert into " + DBOpenHelper.tableName + "  values( '004'  , '菜刀' , '厨房餐具' , 3000 , 2800 , '2009-09-20' )" ;
+        String sql4 = "insert into " + DBOpenHelper.tableName + "  values( '004'  , '菜刀' , '厨房餐具' , 3000 , null , '2009-09-20' )" ;
         db.execSQL(sql4);
-        String sql5 = "insert into " + DBOpenHelper.tableName + "  values( '005'  , '高压锅' , '厨房餐具' , 6800 , 500 , '2009-01-15' )" ;
+        String sql5 = "insert into " + DBOpenHelper.tableName + "  values( '005'  , '高压锅' , '厨房餐具' , 6800 , 2800 , '2009-01-15' )" ;
         db.execSQL(sql5);
-        String sql6 = "insert into " + DBOpenHelper.tableName + "  values( '006'  , '叉子' , '厨房餐具' , 500 , 500 , '2009-09-20' )" ;
+        String sql6 = "insert into " + DBOpenHelper.tableName + "  values( '006'  , '叉子' , '厨房餐具' , 500 , 5000 , '2009-09-20' )" ;
         db.execSQL(sql6);
-        String sql7 = "insert into " + DBOpenHelper.tableName + "  values( '007'  , '擦菜板' , '厨房餐具' , 880 , 500 , '2009-04-28' )" ;
+        String sql7 = "insert into " + DBOpenHelper.tableName + "  values( '007'  , '擦菜板' , '厨房餐具' , 880 , null , '2009-04-28' )" ;
         db.execSQL(sql7);
-        String sql8 = "insert into " + DBOpenHelper.tableName + "  values( '008'  , '圆珠笔' , '办公用品' , 100 , null , '2009-11-11' )" ;
+        String sql8 = "insert into " + DBOpenHelper.tableName + "  values( '008'  , '圆珠笔' , '办公用品' , 100 , 790 , '2009-11-11' )" ;
         db.execSQL(sql8);
     }
 
     /**
-     * 删除数据 ， 删除数据需要指定：删除哪张表中的数据 ，删除的条件是什么，即什么样的行被删除
+     * 删除数据 ， 删除数据需要指定：删除哪张表中的数据(即from )，删除的条件是什么(where 即什么样的行被删除）
      * delete from tableName where ?  where 为true  的行被删除
      * 注： deleta from tableName ; 语句中如果忘记写了 from 或是 多了列名都会出错
      * 例： delete tableName ;  因为 delete 删除的对象是 行  而不是表 ( drop tableName) ;
@@ -176,7 +198,7 @@ public class DBHelper {
     }
 
     /**
-     * 数据更新 更新数据需要指出：更新哪一张表中的数据？更新哪些列的值，值是什么？更新的条件是什么？（不指明条件就更新表中所有行）
+     * 数据更新 更新数据需要指出：更新哪一张表中的数据？(即from )。更新哪些列的值，值是什么？更新的条件是什么？（不指明条件就更新表中所有行）
      * 例： update tableName set column1 = values1 , column2 = values12 ;  更新所有行
      * 例： update tableName set column1 = values1 , column2 = values12  where ? ;  where为true的行更新
      */
@@ -193,9 +215,9 @@ public class DBHelper {
      * 2 ：select column1 , column2 , column3 from ; 选出部分列，选出来的结果列的顺序与列清单写的顺序一致。
      * 3 ：select 语句中可以为列设置别名。例： select column1 AS "第一列的别名（随便写） , column2 AS "第二列的别名（随便写）" ; 注： 别名一定要用 ""  括起来 。使用了别名后，在查询出来的结果集中就就不是列名了，而是别名
      * 4 ：对选出来的结果集去重，distinct 关键字的使用。例：select distinct column1 from tableName ;
-     * 注：distinct去重是（某）列而言的，即使用了distinct 的列的值存在重复值时，查询出来的就只有一个（行），这列重复值的其他行就没有被选出来。
-     * 注：distinct 也可以用多列，当写了多列时是，只有在写出的所有列的值同时重复值才成立。例：表中有两行是 column1 ="12"   column2 = "22" ， 只有column1 和column2 值都等了 distinct 才成立
-     * 注：distinct 只能写在 列名的 前面 ，并且只能写在第一列的前面。若写为 ：select column1 ,distinct column2  from tableName ; 会报错，因写为： select distinct column1 ,column2 from tableName ;
+     * 注：distinct去重（重是对列的值而言的），即使用了distinct 的列的值存在重复值时，查询出来的就只有一个（行），这列重复值的其他行就没有被选出来。
+     * 注：distinct 也可以用多列，当写了多列时，只有在写出的所有列的值同时重复值才成立。例：表中有两行是 column1 ="12"   column2 = "22" ， 只有column1 和column2 值都等了 distinct 才成立
+     * 注：distinct 只能写在 列名的前面 ，并且只能写在第一列的前面。若写为 ：select column1 ,distinct column2  from tableName ; 会报错，应写为： select distinct column1 ,column2 from tableName ;
      * 注：当使用distinct关键字时，表中有值重复的两行，那查询出来的是那一行呢？仔细想一下其实那一行都没有关系，因为使用了distinct 关键字后 ，只有所有的写出来的所有的列的值都重复时才会成立，选取出来的集中也只有那写出来的那些列。
      * 注：distinct 关键字对null值算一种特殊的值，当某列多行值是null, 算一个。（行）
      * 注：select 语句选出来结果的顺序（即行的顺序与表中行的顺序可能不一致的，且每次执行结果可能不一样）行顺序与列顺序不是同一个概念
@@ -242,15 +264,11 @@ public class DBHelper {
         cursor.moveToFirst();
         Log.d("TAG" , "总行数 count = "+ cursor.getLong(0));
 
-        String sql2 = "select count(diatinct regist_date) from "+ DBOpenHelper.tableName ; // 是先删除重复的值在计算行数 值为;5 。注意执行顺序
+        String sql2 = "select count(distinct regist_date) from "+ DBOpenHelper.tableName ; // 是先删除重复的值在计算行数 值为;5 。注意执行顺序
         Cursor cursor2 = db.rawQuery(sql2 , null);
         cursor2.moveToFirst();
         Log.d("TAG" , "总行数 count = "+ cursor2.getLong(0));
 
-        String sql3 = "select diatinct count(regist_date) from "+ DBOpenHelper.tableName ; // 是计算行数在删除重复的值 值为：7  。注意执行顺序
-        Cursor cursor3 = db.rawQuery(sql3 , null);
-        cursor3.moveToFirst();
-        Log.d("TAG" , "总行数 count = "+ cursor3.getLong(0));
     }
 
     /**
@@ -304,6 +322,124 @@ public class DBHelper {
         Cursor cursor = db.rawQuery(sql , null);
         cursor.moveToFirst();
         Log.d("TAG" , "min = "+ cursor.getInt(0));
+    }
+
+    /**
+     * 对表进行分组 ：对表进行分组就是使用聚合函数Group by 函数以聚合键将表分成几组。就像分蛋糕一样，安人数将蛋糕切分。
+     * 语句如：select column1 , column2 , column3 , column4 from tableName group by  column1 , column2 , column3 , column4;
+     * 聚合键：在Group by 子句中的列称为聚合键 。上例：column1 , column2 , column3 , column4 都是聚合键。
+     * 注：当作为聚合键的列的值存在null 时，group by 会将null 作为一种特殊的值（不确定值）来处理，和distinct 关键字一样。
+     * 书写顺序：select -> from -> where -> group by ;  书写顺寻不能错乱，否则执行报错。
+     * 执行顺寻：from -> where -> group by -> select : 即从指定tableName 中 先使用where 进行过滤 ，对过后的数据在进行 broup by 分组 ，最后在select 。
+     * 注：使用group by常见的错误
+     * 在select 中多写了 broup by 聚合键中之外的列也是可以的，SQLite3是个特例。使用了group by 后 select 中使能  （常数）,（聚合函数count sum avg max min ）, ((聚合键以及聚合键之外的列)
+     * 分组后，一组一个(行)结果表示。一行代表一组。
+     * 例1：在group by 中写了列的别名 如：selcet column ad "第一列的别名" from tableName group by 第一列的别名 ；
+     * 出错的原因从执行的顺序来找，别名是写在 select 子局中定义的 ，而 group by 的执行顺序比 select 先执行，所以在执行到 group by 中时 出现了别名，这时并不h知道它是什么，所以报错。
+     * 例2：认为使用了Group by 后查询出来的结果是有序的。在没有排序函数时，查询出来的结果都是无序的。
+     * 例3：where 中使用聚合函数。（聚合函数只能出现在select havint order by 中）
+     */
+    public void getGroupBy(){
+        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+        String sql = "select purcgase_price , count(*) from "+ DBOpenHelper.tableName +" where product_type = '衣服' group by purcgase_price" ; // 计算表中的所有行数
+        Cursor cursor = db.rawQuery(sql , null);
+        if(!cursor.moveToFirst()) {
+            Log.d("TAG" , "null" );
+            return;
+        }
+        int count = cursor.getCount() ;
+        for( int i = 0 ; i < count ; i++ ){
+            String s1 = cursor.getString(0);
+            int s2 = cursor.getInt(1);
+            if(i == 0 ){
+                Log.d("TAG"+ i , "     purcgase_price     ,   count       ") ;
+            }
+            Log.d("TAG"+ i , "     " + s1 + "              ,          "+ s2 +   "      ") ;
+            cursor.moveToNext();
+        }
+        cursor.close();
+    }
+
+
+    /**
+     * 对分组后的过滤
+     * where 自居用来指定数据行的条件，having子句用来指定分组的条件。
+     * 问题：怎样选出分组后为两行的组？这时就可以使用having 了。
+     * 书写顺序：select -> form -> where -> group by -> having -> order by
+     * 执行顺序：from -> where -> groug by -> having -> select -> order by
+     * 注：having 的组成 (常数) , (聚合函数) , (聚合键以及聚合键以外的键)
+     */
+    public void groupByHaving(){
+        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+        String sql = "select product_type , count(*) from "+ DBOpenHelper.tableName +" group by product_type having count(*)=2" ; // 选出为两行的组
+        String sq2 = "select product_type , avg(sale_price) from "+ DBOpenHelper.tableName +" group by product_type having avg(sale_price)>=2500" ; // 选出分组后sale_price>=2500的组
+        Cursor cursor = db.rawQuery(sq2 , null);
+        if(!cursor.moveToFirst()) {
+            Log.d("TAG" , "null" );
+            return;
+        }
+        int count = cursor.getCount() ;
+        // sql1
+//        for( int i = 0 ; i < count ; i++ ){
+//            String s1 = cursor.getString(0);
+//            int s2 = cursor.getInt(1);
+//            if(i == 0 ){
+//                Log.d("TAG"+ i , "     product_type     ,   count       ") ;
+//            }
+//            Log.d("TAG"+ i , "     " + s1 + "              ,          "+ s2 +   "      ") ;
+//            cursor.moveToNext();
+//        }
+
+        // sql2
+        for( int i = 0 ; i < count ; i++ ){
+            String s1 = cursor.getString(0);
+            double s2 = cursor.getDouble(1);
+            if(i == 0 ){
+                Log.d("TAG"+ i , "     product_type     ,   avg       ") ;
+            }
+            Log.d("TAG"+ i , "     " + s1 + "              ,          "+ s2 +   "      ") ;
+            cursor.moveToNext();
+        }
+        cursor.close();
+    }
+
+
+    /**
+     * 排序：asc (升序，默认的顺序), desc (降序)。
+     * 书写顺序：select -> form -> where -> group by -> having -> order by。
+     * 执行顺序：from -> where -> groug by -> having -> select -> order by。
+     * 所以order by 中可以使用 列的别名 （但不能使用列的编号）。
+     * 注：写在 order by 中的列称为排序键。
+     * 注：语句中使用了order by 后 不写 asc 或desc 时，默认使用的是asc。
+     * 注：排序键的值存在null时，在SQLite3中会把他当成0来处理。
+     * 注：排序键可以使用任何键；
+     * 注：order by 中可以使用聚合函数，别名，所有列。（不能使用编号)。
+     * 注：排序键可以写多列，逗号隔开。优先级从左到有。
+     */
+    public void orderBy(){
+        SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+        dbOpenHelper.getReadableDatabase();
+        String sql = "select product_id , product_name , sale_price , purcgase_price from "+ DBOpenHelper.tableName +" order by purcgase_price desc  , sale_price asc " ; // 选出为两行的组
+        String sq2 = "select product_id , product_name , sale_price , purcgase_price , product_type from "+ DBOpenHelper.tableName +" group by product_type order by count(*) " ; // 行数的从下到大的排序
+        Cursor cursor = db.rawQuery(sq2 , null);
+        if(!cursor.moveToFirst()) {
+            Log.d("TAG" , "null" );
+            return;
+        }
+        int count = cursor.getCount() ;
+        for( int i = 0 ; i < count ; i++ ){
+            String s1 = cursor.getString(cursor.getColumnIndex("product_id"));
+            String s2 = cursor.getString(cursor.getColumnIndex("product_name"));
+            int s3 = cursor.getInt(cursor.getColumnIndex("sale_price"));
+            int s4 = cursor.getInt(cursor.getColumnIndex("purcgase_price"));
+            String s5 = cursor.getString(cursor.getColumnIndex("product_type"));
+            if(i == 0 ){
+                Log.d("TAG"+ i , "     product_id     ,   product_name     ,    sale_price    ,  purcgase_price  , purcgase_price ") ;
+            }
+            Log.d("TAG"+ i , "     " + s1 + "              ,          "+ s2 +   "      "  + s3 +   "      "  + s4 +   "      "+ s5) ;
+            cursor.moveToNext();
+        }
+        cursor.close();
     }
 
 }
